@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f1420">
+<title>고윳값 사냥꾼</title>
+<meta name="description" content="기계를 통과해도 방향이 안 바뀌는 화살표를 찾아라! 고윳값·슈뢰딩거 방정식·에너지 계단을 손으로 체험하는 앱">
+<style>
+:root{--bg:#0f1420;--card:#182033;--card2:#1f2a42;--fg:#e8edf7;--mut:#93a0b8;--line:#2c3a58;
+--x:#ffffff;--ax:#ffb547;--ok:#5ee08a;--bad:#ff6b6b;--blue:#4fc3f7;--pur:#c792ea}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;line-height:1.5}
+[hidden]{display:none!important}
+.wrap{max-width:560px;margin:0 auto;padding:12px 14px 40px}
+h1{font-size:1.2rem;margin:6px 0}
+h1 small{display:block;font-size:.75rem;color:var(--mut);font-weight:400}
+.tabs{display:flex;gap:5px;margin:10px 0}
+.tabs button{flex:1;padding:9px 2px;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:10px;font-size:.84rem;font-weight:600}
+.tabs button.on{background:#2b3c63;color:#fff;border-color:#4a66a8}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0}
+canvas{display:block;width:100%;touch-action:none;border-radius:12px;background:#121a2b}
+h2{font-size:1rem;margin:2px 0 8px}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.row+.row{margin-top:8px}
+.pill{padding:7px 11px;border-radius:999px;border:1px solid var(--line);background:var(--card2);color:var(--fg);font-size:.85rem}
+.pill.on{border-color:var(--pur);color:#fff;background:#3a2b55}
+.btn{padding:11px 14px;border-radius:12px;border:0;background:#3d63c9;color:#fff;font-weight:700;font-size:.95rem;flex:1}
+.btn.sec{background:var(--card2);border:1px solid var(--line);color:var(--fg)}
+.note{font-size:.85rem;color:var(--mut);margin:8px 0 0}
+.note b{color:var(--fg)}
+label.lb{font-size:.85rem;color:var(--mut);min-width:70px}
+input[type=range]{flex:1;accent-color:#7aa2ff;min-width:120px}
+.val{min-width:64px;text-align:right;font-variant-numeric:tabular-nums;font-size:.9rem}
+.stage{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.stage .lv{font-weight:700}
+.stage .tm{font-variant-numeric:tabular-nums;color:var(--mut);font-size:.9rem}
+.mat{display:inline-grid;grid-template-columns:repeat(2,42px);gap:2px 6px;padding:4px 10px;border-left:2px solid var(--fg);border-right:2px solid var(--fg);border-radius:6px;font-variant-numeric:tabular-nums;text-align:center;font-weight:700}
+.found{display:flex;gap:6px;margin-top:8px}
+.slot{flex:1;border:1px dashed var(--line);border-radius:10px;padding:6px 8px;font-size:.85rem;color:var(--mut);text-align:center}
+.slot.got{border-style:solid;border-color:var(--ok);color:var(--fg);background:#17301f}
+.meter{height:10px;background:var(--card2);border-radius:5px;overflow:hidden;margin-top:6px}
+.meter div{height:100%;background:linear-gradient(90deg,#ff6b6b,#ffb547,#5ee08a);transition:width .1s}
+.msg{min-height:1.5em;text-align:center;margin-top:8px;font-weight:600}
+.tbl{width:100%;border-collapse:collapse;font-size:.88rem;font-variant-numeric:tabular-nums}
+.tbl th,.tbl td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl th{color:var(--mut);font-weight:500}
+.quiz-q{font-size:1rem;font-weight:600;margin:4px 0 10px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts button{text-align:left;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--fg);font-size:.95rem}
+.opts button.ok{border-color:var(--ok);background:#1d3b2b}
+.opts button.no{border-color:var(--bad);background:#3e1f25}
+.exp{margin-top:10px;font-size:.88rem;background:#14203a;border-left:3px solid #7aa2ff;padding:8px 10px;border-radius:6px}
+.prog{font-size:.8rem;color:var(--mut)}
+.big{font-size:2rem;text-align:center;margin:6px 0}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.78rem;color:var(--mut);margin-top:6px}
+.legend i{display:inline-block;width:12px;height:4px;border-radius:2px;margin-right:4px;vertical-align:middle}
+footer{text-align:center;color:var(--mut);font-size:.78rem;margin-top:18px}
+footer a{color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🎯 고윳값 사냥꾼<small>모양은 그대로, 숫자만 바뀌는 특별한 것을 찾아라</small></h1>
+
+<div class="tabs">
+  <button class="on" data-tab="hunt">방향 찾기</button>
+  <button data-tab="string">기타줄·계단</button>
+  <button data-tab="comp">컴퓨터 풀이</button>
+  <button data-tab="quiz">퀴즈</button>
+</div>
+
+<!-- ===== 1. 고유방향 사냥 ===== -->
+<section id="tab-hunt">
+  <div class="card">
+    <div class="stage"><span class="lv" id="lvName">스테이지 1</span><span class="tm" id="timer">0.0초</span></div>
+    <div class="row" style="margin:8px 0;justify-content:space-between">
+      <span style="font-size:.85rem;color:var(--mut)">변형 기계 A =</span>
+      <span class="mat" id="mat"></span>
+      <button class="pill" id="ghostBtn">기계 전체 보기</button>
+    </div>
+    <canvas id="hc" width="600" height="600"></canvas>
+    <div class="legend"><span><i style="background:#fff"></i>넣은 화살표 x</span><span><i style="background:#ffb547"></i>나온 화살표 Ax</span><span><i style="background:#c792ea"></i>원이 변한 모양</span></div>
+    <div style="font-size:.82rem;color:var(--mut);margin-top:8px">방향 일치도 <span id="degTxt"></span></div>
+    <div class="meter"><div id="meter" style="width:0%"></div></div>
+    <div class="found"><div class="slot" id="s0">특별한 방향 ①<br>?</div><div class="slot" id="s1">특별한 방향 ②<br>?</div></div>
+    <div class="msg" id="hMsg">화면 아무 곳이나 끌어 흰 화살표를 돌려 보세요</div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn sec" id="noneBtn">특별한 방향이 없다!</button>
+      <button class="btn" id="nextBtn" disabled>다음 스테이지 ▶</button>
+    </div>
+  </div>
+  <div class="card"><p class="note" id="hNote" style="margin:0">대부분의 화살표는 기계를 지나면 <b>방향이 틀어집니다</b>. 그런데 어떤 방향은 길이만 늘거나 줄 뿐 방향이 그대로입니다. 그 화살표가 <b>고유벡터</b>, 배율이 <b>고윳값</b>입니다. 식으로는 <b>A x = λ x</b>.</p></div>
+</section>
+
+<!-- ===== 2. 기타줄 · 에너지 계단 ===== -->
+<section id="tab-string" hidden>
+  <div class="card">
+    <h2>🎸 우물에 갇힌 전자 = 기타줄</h2>
+    <canvas id="sc" width="600" height="380"></canvas>
+    <div class="legend"><span><i style="background:#4fc3f7"></i>파동의 실수 부분(출렁임)</span><span><i style="background:#ffb547"></i>확률 분포 |ψ|²</span></div>
+    <div class="row" style="margin-top:10px">
+      <button class="pill mode on" data-m="1">1덩어리</button>
+      <button class="pill mode" data-m="2">2덩어리</button>
+      <button class="pill mode" data-m="3">3덩어리</button>
+      <button class="pill mode" data-m="12">1+2 섞기</button>
+    </div>
+    <p class="note" id="sNote"></p>
+  </div>
+  <div class="card">
+    <h2>📏 우물 폭과 계단</h2>
+    <div class="row"><label class="lb">우물 폭</label><input type="range" id="Lr" min="20" max="150" value="50"><span class="val" id="Lv">5.0 nm</span></div>
+    <div class="row"><label class="lb">우물 개수</label><input type="range" id="Wr" min="1" max="24" value="1"><span class="val" id="Wv">1개</span></div>
+    <table class="tbl" style="margin-top:8px"><thead><tr><th>계단</th><th>에너지</th><th>1칸의 몇 배</th></tr></thead><tbody id="eTbl"></tbody></table>
+    <p class="note" id="wNote"></p>
+  </div>
+</section>
+
+<!-- ===== 3. 컴퓨터 풀이 ===== -->
+<section id="tab-comp" hidden>
+  <div class="card">
+    <h2>💻 곡선을 점으로 쪼개면 행렬이 된다</h2>
+    <canvas id="cc" width="600" height="300"></canvas>
+    <div class="row" style="margin-top:10px"><label class="lb">격자점 개수</label><input type="range" id="Nr" min="3" max="60" value="10"><span class="val" id="Nv">10개</span></div>
+    <div class="row">
+      <button class="pill kb on" data-k="1">1번째 계단</button>
+      <button class="pill kb" data-k="2">2번째</button>
+      <button class="pill kb" data-k="3">3번째</button>
+    </div>
+    <table class="tbl" style="margin-top:10px"><thead><tr><th>폭 5 nm 우물</th><th>점으로 계산</th><th>정확한 값</th><th>오차</th></tr></thead><tbody id="cTbl"></tbody></table>
+  </div>
+  <div class="card">
+    <h2>🧮 컴퓨터가 받는 표(해밀토니안 행렬)</h2>
+    <canvas id="mc" width="600" height="300"></canvas>
+    <p class="note" id="mNote"></p>
+  </div>
+</section>
+
+<!-- ===== 4. 퀴즈 ===== -->
+<section id="tab-quiz" hidden><div class="card" id="qCard"></div></section>
+
+<footer>© 2026 정필 수심명 · <a href="https://blog.naver.com/omyman" target="_blank" rel="noopener">blog.naver.com/omyman</a><br>「수학자의 양자역학」 제2강 부록 · 인터넷 없이 동작<br><span style="font-size:.72rem">에너지 값은 자유전자 질량의 단순 우물 모형 기준이며, 실제 소자 값은 유효질량 등에 따라 다릅니다.</span></footer>
+</div>
+
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const D=Math.PI/180;
+function prep(cv,ratio){const dpr=Math.min(2,window.devicePixelRatio||1),w=cv.clientWidth||360,h=Math.round(w*ratio);
+  cv.width=w*dpr;cv.height=h*dpr;cv.style.height=h+'px';const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);return {c,w,h};}
+function L(c,x1,y1,x2,y2,col,wd,dash){c.beginPath();c.setLineDash(dash||[]);c.strokeStyle=col;c.lineWidth=wd;c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();c.setLineDash([]);}
+function head(c,x1,y1,x2,y2,col,s){const a=Math.atan2(y2-y1,x2-x1);c.beginPath();c.fillStyle=col;c.moveTo(x2,y2);c.lineTo(x2-s*Math.cos(a-.4),y2-s*Math.sin(a-.4));c.lineTo(x2-s*Math.cos(a+.4),y2-s*Math.sin(a+.4));c.closePath();c.fill();}
+function T(c,s,x,y,col,size,al,bl){c.fillStyle=col;c.font=`${size||12}px -apple-system,"Malgun Gothic",sans-serif`;c.textAlign=al||'center';c.textBaseline=bl||'middle';c.fillText(s,x,y);}
+let best={};try{best=JSON.parse(localStorage.getItem('eh_best')||'{}');}catch(e){}
+const save=()=>{try{localStorage.setItem('eh_best',JSON.stringify(best));}catch(e){}};
+
+/* ================= 1. 고유방향 사냥 ================= */
+const LV=[
+ {m:[[3,0],[0,1]],name:'워밍업 — 가로로 잡아당기는 기계',tip:'가로로만 3배 늘리는 기계입니다. 어떤 방향이 안 돌아갈까요?'},
+ {m:[[2,1],[1,2]],name:'강의 속 그 기계',tip:'강의에서 본 기계입니다. 한 방향은 3배, 다른 방향은 그대로(1배)였죠.'},
+ {m:[[1,2],[2,1]],name:'뒤집는 기계',tip:'배율이 음수면 화살표가 정반대로 뒤집혀 나옵니다. 그래도 같은 직선 위면 "방향이 안 바뀐" 것으로 칩니다.'},
+ {m:[[2,1],[1,3]],name:'비스듬한 기계',tip:'이번엔 특별한 방향이 깔끔한 각도가 아닙니다. 일치도 막대를 보며 찾아보세요.'},
+ {m:null,name:'무작위 대칭 기계',tip:'대칭인 기계(표가 대각선 기준으로 대칭)는 언제나 서로 직각인 특별한 방향 두 개가 있습니다.'},
+ {m:[[0,-1],[1,0]],name:'빙글 도는 기계',tip:'모든 화살표를 90° 돌리는 기계입니다. 특별한 방향이 있을까요?',none:true}
+];
+let lv=0,M,ang=0.6,found=[],t0=0,running=false,ghost=false,done=false,stageTimes=[];
+const hc=$('#hc');let H;
+function randSym(){const r=()=>Math.round((Math.random()*3.2-0.6)*2)/2;let p,q,r2;do{p=r();q=r();r2=r();}while(Math.abs(q)<0.5);
+  const lam=eig(p,q,r2);if(Math.abs(lam[0])>3.6||Math.abs(lam[1])>3.6||Math.abs(lam[0]-lam[1])<0.6||Math.abs(lam[1])<0.3)return randSym();return [[p,q],[q,r2]];}
+function eig(p,q,r){const m=(p+r)/2,d=Math.sqrt(((p-r)/2)**2+q*q);return [m+d,m-d];}
+function eigAngles(){const [[p,q],[,r]]=M;const th=0.5*Math.atan2(2*q,p-r);return [th,th+Math.PI/2];}
+const fmt=v=>{const s=(Math.round(v*100)/100).toString();return s.replace('-','−');};
+function startLevel(i){lv=i;const d=LV[i];M=d.m?d.m.map(r=>r.slice()):randSym();found=[];done=false;
+  ang=Math.random()*Math.PI;t0=performance.now();running=true;
+  $('#lvName').textContent=`스테이지 ${i+1}/${LV.length} · ${d.name}`;
+  $('#mat').innerHTML=M.flat().map(v=>`<span>${fmt(v)}</span>`).join('');
+  $('#nextBtn').disabled=true;$('#nextBtn').textContent=i<LV.length-1?'다음 스테이지 ▶':'결과 보기 ▶';
+  ['s0','s1'].forEach((s,k)=>{$('#'+s).className='slot';$('#'+s).innerHTML=`특별한 방향 ${k?'②':'①'}<br>?`;});
+  $('#hMsg').textContent='화면을 끌어 흰 화살표를 돌려 보세요';$('#hMsg').style.color='';
+  $('#hNote').innerHTML='💡 '+d.tip;
+  drawH();}
+function mul(v){return [M[0][0]*v[0]+M[0][1]*v[1],M[1][0]*v[0]+M[1][1]*v[1]];}
+function align(){const x=[Math.cos(ang),Math.sin(ang)],y=mul(x),n=Math.hypot(...y);if(n<1e-9)return {s:1,d:0,lam:0};
+  const cr=(x[0]*y[1]-x[1]*y[0])/n,dt=(x[0]*y[0]+x[1]*y[1])/n;return {s:Math.abs(cr),d:dt,lam:x[0]*y[0]+x[1]*y[1],y};}
+function drawH(){
+  H=prep(hc,1);const {c,w,h}=H,cx=w/2,cy=h/2;c.clearRect(0,0,w,h);
+  // scale
+  let mx=1;for(let k=0;k<64;k++){const a=k/64*2*Math.PI;mx=Math.max(mx,Math.hypot(...mul([Math.cos(a),Math.sin(a)])));}
+  const u=(w*0.43)/mx, P=(v)=>[cx+v[0]*u,cy-v[1]*u];
+  L(c,0,cy,w,cy,'#26324d',1);L(c,cx,0,cx,h,'#26324d',1);
+  // unit circle & image ellipse
+  c.beginPath();for(let k=0;k<=96;k++){const a=k/96*2*Math.PI,p=P([Math.cos(a),Math.sin(a)]);k?c.lineTo(...p):c.moveTo(...p);}c.strokeStyle='#3a4a6e';c.lineWidth=1.5;c.stroke();
+  c.beginPath();for(let k=0;k<=96;k++){const a=k/96*2*Math.PI,p=P(mul([Math.cos(a),Math.sin(a)]));k?c.lineTo(...p):c.moveTo(...p);}c.strokeStyle='#c792ea';c.lineWidth=1.5;c.setLineDash([5,4]);c.stroke();c.setLineDash([]);
+  if(ghost){for(let k=0;k<16;k++){const a=k/16*2*Math.PI,v=[Math.cos(a),Math.sin(a)],p=P(v),q=P(mul(v));
+    L(c,cx,cy,p[0],p[1],'rgba(255,255,255,.18)',1);L(c,cx,cy,q[0],q[1],'rgba(255,181,71,.35)',1.2);L(c,p[0],p[1],q[0],q[1],'rgba(199,146,234,.25)',1,[2,3]);}}
+  // found lines
+  found.forEach(f=>{const v=[Math.cos(f.a),Math.sin(f.a)],e=w;L(c,cx-v[0]*e,cy+v[1]*e,cx+v[0]*e,cy-v[1]*e,'rgba(94,224,138,.55)',2,[8,5]);});
+  // arrows
+  const x=[Math.cos(ang),Math.sin(ang)],y=mul(x),px=P(x),py=P(y);
+  L(c,cx,cy,py[0],py[1],'#ffb547',5);head(c,cx,cy,py[0],py[1],'#ffb547',14);
+  L(c,cx,cy,px[0],px[1],'#ffffff',3);head(c,cx,cy,px[0],px[1],'#ffffff',12);
+  T(c,'x',px[0]+(x[0]>=0?10:-10),px[1]-10,'#fff',13);T(c,'Ax',py[0]+(y[0]>=0?14:-14),py[1]-12,'#ffb547',13);
+  c.beginPath();c.arc(cx,cy,3.5,0,7);c.fillStyle='#fff';c.fill();
+  // meter
+  const al=align(),score=Math.max(0,1-Math.asin(Math.min(1,al.s))/(Math.PI/2));
+  $('#meter').style.width=(Math.pow(score,3)*100).toFixed(1)+'%';
+  $('#degTxt').textContent=`· 두 화살표 사이 각 ${(Math.acos(Math.max(-1,Math.min(1,al.d)))/D).toFixed(1)}°`;
+}
+function tryCatch(){
+  if(done||!LV[lv].m&&false)return;
+  if(LV[lv].none)return;
+  // snap: 입력 화살표가 특별한 방향에서 4° 이내면 정답 처리
+  const ea=eigAngles();let bestA=null,bd=9;
+  ea.forEach(a=>{for(const s of [a,a+Math.PI,a-Math.PI,a+2*Math.PI,a-2*Math.PI]){const d=Math.abs(s-ang);if(d<bd){bd=d;bestA=s;}}});
+  if(bd>4*D){if(align().s<Math.sin(15*D)){$('#hMsg').textContent='아주 가까워요! 조금만 더 맞춰 보세요';$('#hMsg').style.color='#ffb547';}return;}
+  ang=bestA;const lam=align().lam;
+  const key=((ang%Math.PI)+Math.PI)%Math.PI;
+  if(found.some(f=>{const d=Math.abs(f.k-key);return Math.min(d,Math.PI-d)<5*D;})){drawH();$('#hMsg').textContent='이미 찾은 방향입니다. 다른 방향을 찾아보세요!';return;}
+  found.push({a:ang,k:key,lam});navigator.vibrate&&navigator.vibrate(30);
+  const i=found.length-1,s=$('#s'+i);s.className='slot got';
+  s.innerHTML=`${(key/D).toFixed(1)}° 방향<br><b>배율 λ = ${fmt(lam)}</b>${lam<0?' (뒤집힘)':''}`;
+  if(found.length===2)finish(`🎉 두 방향 모두 찾았습니다! 두 방향은 서로 <b>직각</b>이네요.`);
+  else{$('#hMsg').innerHTML=`찾았다! 이 방향은 길이만 <b>${fmt(lam)}배</b>. 하나 더 있어요.`;$('#hMsg').style.color='#5ee08a';}
+  drawH();
+}
+function finish(msg){done=true;running=false;const t=(performance.now()-t0)/1000;stageTimes[lv]=t;
+  $('#hMsg').innerHTML=msg+` <span style="color:var(--mut)">(${t.toFixed(1)}초)</span>`;$('#hMsg').style.color='#5ee08a';$('#nextBtn').disabled=false;}
+let drag=false;
+function setAng(e){const r=hc.getBoundingClientRect(),x=e.clientX-r.left-r.width/2,y=r.height/2-(e.clientY-r.top);if(Math.hypot(x,y)<6)return;ang=Math.atan2(y,x);drawH();}
+hc.addEventListener('pointerdown',e=>{if(done)return;drag=true;hc.setPointerCapture(e.pointerId);setAng(e);});
+hc.addEventListener('pointermove',e=>{if(drag)setAng(e);});
+['pointerup','pointercancel'].forEach(t=>hc.addEventListener(t,()=>{if(drag){drag=false;tryCatch();}}));
+$('#ghostBtn').onclick=()=>{ghost=!ghost;$('#ghostBtn').classList.toggle('on',ghost);drawH();};
+$('#noneBtn').onclick=()=>{if(done)return;
+  if(LV[lv].none){finish('🎉 정답! 모든 화살표가 90° 돌아가니 방향이 그대로인 화살표는 <b>없습니다</b>. 이 기계는 대칭이 아니라서 고윳값이 실수로 나오지 않습니다(±i). 그래서 측정하는 양에는 대칭(에르미트) 기계를 씁니다.');
+    $('#s0').className=$('#s1').className='slot got';$('#s0').innerHTML='실수 방향<br><b>없음</b>';$('#s1').innerHTML='고윳값<br><b>±i (허수)</b>';}
+  else{$('#hMsg').textContent='아니에요! 이 기계는 대칭이라 특별한 방향이 반드시 있습니다.';$('#hMsg').style.color='#ff6b6b';}};
+$('#nextBtn').onclick=()=>{if(lv<LV.length-1)startLevel(lv+1);else showResult();};
+function showResult(){const tot=stageTimes.reduce((a,b)=>a+(b||0),0);const prev=best.hunt;if(!prev||tot<prev){best.hunt=tot;save();}
+  $('#lvName').textContent='🏁 전체 완료!';running=false;
+  $('#hMsg').innerHTML=`총 ${tot.toFixed(1)}초 · 최고 기록 ${best.hunt.toFixed(1)}초`;$('#hMsg').style.color='#5ee08a';
+  $('#nextBtn').disabled=false;$('#nextBtn').textContent='처음부터 다시';$('#nextBtn').onclick=()=>{stageTimes=[];$('#nextBtn').onclick=()=>{if(lv<LV.length-1)startLevel(lv+1);else showResult();};startLevel(0);};
+  $('#hNote').innerHTML='여기서 찾은 것이 바로 <b>고윳값 문제</b>입니다. 슈뢰딩거 방정식 <b>Hψ = Eψ</b>는 기계가 <b>해밀토니안</b>, 화살표가 <b>파동함수</b>, 배율이 <b>에너지</b>로 바뀐 같은 문제입니다. 다음 탭에서 그 "파동 화살표"를 만나 보세요.';}
+setInterval(()=>{if(running)$('#timer').textContent=((performance.now()-t0)/1000).toFixed(1)+'초';},100);
+
+/* ================= 2. 기타줄 · 계단 ================= */
+const C_HM=0.0380998; // ħ²/2m (eV·nm²)
+const E1=Lnm=>Math.PI*Math.PI*C_HM/(Lnm*Lnm)*1000; // meV
+let mode='1',Lnm=5,Wn=1,tt=0,lastT=0;
+const sc=$('#sc');
+function sNote(){const e1=E1(Lnm);
+  if(mode==='12'){const dE=e1*3,Tfs=4135.667/dE;
+    $('#sNote').innerHTML=`1덩어리(빠르기 1)와 2덩어리(빠르기 4) 바늘이 서로 다른 속도로 돕니다. 같은 방향일 땐 키우고 반대일 땐 지워서 확률이 <b>좌우로 출렁</b>입니다(맥놀이). 출렁임 한 번의 시간은 에너지 차이로 정해져, 폭 ${Lnm.toFixed(1)} nm에서 약 <b>${Tfs<1000?Tfs.toFixed(0)+' 펨토초':(Tfs/1000).toFixed(2)+' 피코초'}</b>입니다.`;}
+  else{const n=+mode;$('#sNote').innerHTML=`<b>정상 상태</b>: 파란 출렁임(시계바늘)은 계속 돌지만 주황 확률 분포는 <b>멈춰</b> 있습니다. 바늘 빠르기 ∝ 에너지 = ${n}² = <b>${n*n}</b>배. 에너지 ${(e1*n*n).toFixed(1)} meV.`;}}
+function eTable(){const e1=E1(Lnm);$('#Lv').textContent=Lnm.toFixed(1)+' nm';$('#Wv').textContent=Wn+'개';
+  $('#eTbl').innerHTML=[1,2,3,4].map(n=>`<tr><td>${n}번째 계단</td><td>${(e1*n*n).toFixed(1)} meV</td><td>${n*n}배</td></tr>`).join('');
+  $('#wNote').innerHTML=(Wn===1?`계단 간격은 1 : 4 : 9 : 16으로 <b>위로 갈수록 벌어집니다</b>. 폭을 2배로 넓히면 모든 계단이 1/4로 낮아지고 촘촘해집니다 — 아주 넓으면(자유 전자) 거의 <b>끊김 없이 이어집니다</b>.`:
+    `우물 ${Wn}개가 나란히 있으면 계단 한 칸이 <b>${Wn}개의 가는 줄</b>로 갈라져 <b>띠(밴드)</b>가 됩니다 — 합창처럼 조금씩 다른 음이 모인 것. 띠 사이 빈 구간이 <b>밴드갭</b>입니다. 우물 개수를 늘려 보세요. (개념 모형)`)
+    ;sNote();}
+function drawS(t){
+  const P=prep(sc,0.62),{c,w,h}=P;c.clearRect(0,0,w,h);
+  const lw=w*0.64, x0=14, x1=lw-40, base=h*0.56, amp=h*0.36;
+  // walls
+  c.fillStyle='#2b3a5c';c.fillRect(x0-8,10,8,h-34);c.fillRect(x1,10,8,h-34);
+  L(c,x0,base,x1,base,'#3a4a6e',1);
+  T(c,`폭 ${Lnm.toFixed(1)} nm`,(x0+x1)/2,h-12,'#93a0b8',11);
+  const ns=mode==='12'?[1,2]:[+mode],cf=ns.length===2?Math.SQRT1_2:1, om=1.3;
+  const N=160,re=[],pr=[];let pmax=0;
+  for(let i=0;i<=N;i++){const s=i/N;let R=0,I=0;ns.forEach(n=>{const ph=-om*n*n*t,v=cf*Math.sin(n*Math.PI*s);R+=v*Math.cos(ph);I+=v*Math.sin(ph);});re.push(R);pr.push(R*R+I*I);}
+  // prob fill
+  c.beginPath();c.moveTo(x0,base);for(let i=0;i<=N;i++)c.lineTo(x0+(x1-x0)*i/N,base-pr[i]*amp*0.55);c.lineTo(x1,base);c.closePath();c.fillStyle='rgba(255,181,71,.35)';c.fill();
+  c.beginPath();for(let i=0;i<=N;i++){const X=x0+(x1-x0)*i/N,Y=base-pr[i]*amp*0.55;i?c.lineTo(X,Y):c.moveTo(X,Y);}c.strokeStyle='#ffb547';c.lineWidth=2;c.stroke();
+  c.beginPath();for(let i=0;i<=N;i++){const X=x0+(x1-x0)*i/N,Y=base-re[i]*amp*0.6;i?c.lineTo(X,Y):c.moveTo(X,Y);}c.strokeStyle='#4fc3f7';c.lineWidth=2.5;c.stroke();
+  // clocks
+  ns.forEach((n,k)=>{const cx=x0+26+k*52,cy=24,r=15;c.beginPath();c.arc(cx,cy,r,0,7);c.fillStyle='#0f1420';c.fill();c.strokeStyle='#4fc3f7';c.lineWidth=1.5;c.stroke();
+    const ph=-om*n*n*t+Math.PI/2;L(c,cx,cy,cx+r*.8*Math.cos(ph),cy-r*.8*Math.sin(ph),'#fff',2);T(c,`${n}: ×${n*n}`,cx,cy+24,'#93a0b8',10);});
+  // staircase
+  const sx0=lw+14,sx1=w-8,top=14,bot=h-26,Emax=600;
+  L(c,sx0,bot,sx1,bot,'#3a4a6e',1);L(c,sx0,top,sx0,bot,'#3a4a6e',1);
+  T(c,'에너지↑',sx0-4,top+4,'#93a0b8',10,'right');T(c,'0',sx0-3,bot,'#93a0b8',10,'right');
+  const e1=E1(Lnm),Y=E=>bot-(E/Emax)*(bot-top);
+  for(let n=1;n<=5;n++){const En=e1*n*n,tn=0.06*En;const on=ns.includes(n);
+    if(En-2*tn>Emax){if(n<=4)T(c,`↑${n}`,sx1-10,top+6,'#93a0b8',10);continue;}
+    const col=on?'#ffb547':'#7aa2ff';
+    if(Wn===1){const y=Y(En);L(c,sx0+4,y,sx1,y,col,on?3:2);if((n===1||Y(e1*(n-1)*(n-1))-y>11))T(c,`${n}`,sx1-2,y-7,col,10,'right');}
+    else{for(let k=1;k<=Wn;k++){const E=En-2*tn*Math.cos(k*Math.PI/(Wn+1));const y=Y(E);if(y<top)continue;L(c,sx0+4,y,sx1,y,col,1);}
+      const ya=Y(En+2*tn),yb=Y(En-2*tn);c.fillStyle=on?'rgba(255,181,71,.12)':'rgba(122,162,255,.10)';c.fillRect(sx0+4,Math.max(top,ya),sx1-sx0-4,yb-Math.max(top,ya));}}
+  T(c,'600',sx0-4,top+18,'#4a5878',9,'right');T(c,'meV',sx0-4,top+30,'#4a5878',9,'right');
+}
+function loop(ts){const dt=lastT?Math.min(0.05,(ts-lastT)/1000):0;lastT=ts;tt+=dt;if(!$('#tab-string').hidden)drawS(tt);requestAnimationFrame(loop);}
+$$('.mode').forEach(b=>b.onclick=()=>{$$('.mode').forEach(x=>x.classList.toggle('on',x===b));mode=b.dataset.m;sNote();});
+$('#Lr').oninput=e=>{Lnm=e.target.value/10;eTable();};
+$('#Wr').oninput=e=>{Wn=+e.target.value;eTable();};
+
+/* ================= 3. 컴퓨터 풀이 ================= */
+let Ng=10,kk=1;
+const exact=k=>E1(5)*k*k, fd=(k,N)=>{const x=k*Math.PI/(N+1);return exact(k)*2*(1-Math.cos(x))/(x*x);};
+function drawC(){
+  $('#Nv').textContent=Ng+'개';
+  $('#cTbl').innerHTML=[1,2,3].map(k=>{const a=fd(k,Ng),b=exact(k),er=(a-b)/b*100;
+    return `<tr${k===kk?' style="color:#ffb547"':''}><td>${k}번째 계단</td><td>${a.toFixed(2)} meV</td><td>${b.toFixed(2)} meV</td><td>${er.toFixed(2)}%</td></tr>`;}).join('');
+  let P=prep($('#cc'),0.5),{c,w,h}=P;c.clearRect(0,0,w,h);
+  const x0=16,x1=w-16,base=h*0.55,amp=h*0.38;
+  c.fillStyle='#2b3a5c';c.fillRect(x0-8,10,8,h-30);c.fillRect(x1,10,8,h-30);L(c,x0,base,x1,base,'#3a4a6e',1);
+  c.beginPath();for(let i=0;i<=200;i++){const s=i/200,X=x0+(x1-x0)*s,Yv=base-Math.sin(kk*Math.PI*s)*amp;i?c.lineTo(X,Yv):c.moveTo(X,Yv);}c.strokeStyle='rgba(79,195,247,.45)';c.lineWidth=2;c.stroke();
+  const pts=[];for(let j=0;j<=Ng+1;j++){const s=j/(Ng+1);pts.push([x0+(x1-x0)*s,base-Math.sin(kk*Math.PI*s)*amp]);}
+  c.beginPath();pts.forEach((p,i)=>i?c.lineTo(...p):c.moveTo(...p));c.strokeStyle='#ffb547';c.lineWidth=1.8;c.stroke();
+  pts.forEach((p,i)=>{if(i===0||i===Ng+1)return;L(c,p[0],base,p[0],p[1],'rgba(255,181,71,.35)',1);c.beginPath();c.arc(p[0],p[1],Ng>30?2.2:3.5,0,7);c.fillStyle='#ffb547';c.fill();});
+  T(c,`점 ${Ng}개로 그린 ${kk}번째 모양  ·  계산 ${fd(kk,Ng).toFixed(2)} / 정확 ${exact(kk).toFixed(2)} meV`,w/2,h-10,'#93a0b8',11);
+  // matrix
+  P=prep($('#mc'),0.5);({c,w,h}=P);c.clearRect(0,0,w,h);
+  const n=Math.min(Ng,24),sz=Math.min((h-20)/n,(w*0.55)/n),ox=12,oy=10;
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++){const d=Math.abs(i-j);c.fillStyle=d===0?'#ffb547':d===1?'#4fc3f7':'#1c2540';c.fillRect(ox+j*sz,oy+i*sz,sz-1,sz-1);
+    if(sz>=16&&d<=1){T(c,d===0?'2':'−1',ox+j*sz+sz/2,oy+i*sz+sz/2,'#0f1420',Math.min(11,sz*0.5));}}
+  if(Ng>24)T(c,`… (실제는 ${Ng}×${Ng})`,ox+n*sz/2,oy+n*sz+2,'#93a0b8',10,'center','top');
+  const tx=ox+n*sz+16;
+  T(c,`${Ng} × ${Ng} 표`,tx,24,'#e8edf7',14,'left');
+  T(c,`칸 ${Ng*Ng}개 중`,tx,50,'#93a0b8',12,'left');
+  T(c,`숫자 있는 칸 ${3*Ng-2}개`,tx,70,'#ffb547',12,'left');
+  T(c,`나머지 ${Ng*Ng-(3*Ng-2)}칸은 0`,tx,90,'#93a0b8',12,'left');
+  T(c,'■ 2 (자기 자신)',tx,124,'#ffb547',11,'left');
+  T(c,'■ −1 (이웃한 점)',tx,142,'#4fc3f7',11,'left');
+  $('#mNote').innerHTML='두 번 미분(휘어진 정도)은 "이웃 두 점의 평균에서 내가 얼마나 벗어났나"로 바뀌어, 표의 <b>대각선 주변에만</b> 숫자가 생깁니다. 이 표의 고윳값을 구하는 것이 컴퓨터가 하는 일입니다. 실제 소자 계산은 점을 수만 개씩 찍고, 낮은 고윳값 몇 개만 반복법으로 구합니다.';
+}
+$('#Nr').oninput=e=>{Ng=+e.target.value;drawC();};
+$$('.kb').forEach(b=>b.onclick=()=>{$$('.kb').forEach(x=>x.classList.toggle('on',x===b));kk=+b.dataset.k;drawC();});
+
+/* ================= 4. 퀴즈 ================= */
+const BANK=[
+ {q:'행렬 A가 어떤 화살표 x를 <b>방향은 그대로, 길이만 3배</b>로 만들었습니다. x와 3을 각각 무엇이라 부를까요?',o:['고유벡터, 고윳값','기저, 차원','고윳값, 고유벡터','행렬, 행렬식'],a:0,e:'방향이 안 바뀌는 화살표가 고유벡터, 그 배율이 고윳값입니다. A x = λ x.'},
+ {q:'사인 곡선을 <b>두 번 미분</b>하면 −사인이 됩니다. 이때 "고윳값"은?',o:['1','0','−1','2'],a:2,e:'모양(사인)은 그대로, 배율만 −1. 두 번 미분 기계의 고유함수가 사인이고 고윳값이 −1입니다.'},
+ {q:'슈뢰딩거 방정식 Hψ = Eψ에서 <b>E</b>는 무엇에 해당할까요?',o:['화살표','변형 기계','배율(고윳값) = 에너지','시간'],a:2,e:'해밀토니안 H = 기계, 파동함수 ψ = 화살표, 에너지 E = 배율입니다.'},
+ {q:'좁은 우물에 갇힌 전자의 에너지 계단은 1번째, 2번째, 3번째가 어떤 비율일까요?',o:['1 : 2 : 3','1 : 4 : 9','1 : 1 : 1','3 : 2 : 1'],a:1,e:'덩어리 수 n의 제곱에 비례해서 1 : 4 : 9. 그래서 계단 간격이 위로 갈수록 벌어집니다.'},
+ {q:'우물 폭을 <b>2배</b>로 넓히면 가장 낮은 계단의 에너지는?',o:['2배','그대로','1/2','1/4'],a:3,e:'에너지는 폭의 제곱에 반비례(∝1/L²). 폭 2배 → 1/4. "기타줄·계단" 탭에서 폭을 바꿔 보세요.'},
+ {q:'에너지 측정기에 허수 눈금이 없는 이유와 관련된 해밀토니안의 성질은?',o:['비대칭','에르미트(대칭)','회전','무작위'],a:1,e:'에르미트(복소수까지 포함한 대칭) 기계의 고윳값은 언제나 실수입니다. 회전 기계는 대칭이 아니라 고윳값이 ±i였죠.'},
+ {q:'에너지 <b>고유상태 하나</b>만 있을 때 시간이 흐르면 확률 분포는?',o:['점점 퍼진다','좌우로 출렁인다','멈춰 있다 (바늘만 돈다)','사라진다'],a:2,e:'바늘(위상)만 돌고 길이는 그대로라 확률 분포는 멈춰 있습니다. 그래서 "정상 상태"입니다.'},
+ {q:'에너지가 다른 두 상태를 섞으면 확률이 출렁입니다. 출렁이는 빠르기를 정하는 것은?',o:['두 에너지의 합','두 에너지의 차이','우물의 개수','관측자의 위치'],a:1,e:'두 바늘의 회전 속도 차이, 곧 에너지 차이가 출렁임(맥놀이)의 빠르기를 정합니다.'},
+ {q:'우물이 수없이 규칙적으로 늘어서면(결정) 계단 한 칸은 어떻게 될까요?',o:['사라진다','더 날카로워진다','얇은 띠(밴드)로 퍼진다','두 배로 높아진다'],a:2,e:'합창처럼 조금씩 다른 음들이 모여 띠가 됩니다. 띠 사이 빈 구간이 밴드갭 — 반도체 성질의 근원입니다.'},
+ {q:'폭 5 nm 우물의 가장 낮은 에너지(정확히 15.04 meV)를 격자점 <b>10개</b>로 계산하면?',o:['약 7.5 meV','약 14.94 meV','약 30 meV','정확히 15.04 meV'],a:1,e:'점 10개만으로도 14.94로 이미 가깝고, 50개면 15.04로 같아집니다. "컴퓨터 풀이" 탭에서 확인해 보세요.'},
+ {q:'대칭인 2×2 기계에서 찾은 특별한 방향 두 개는 서로 어떤 관계일까요?',o:['같은 방향','45°','직각','반드시 겹친다'],a:2,e:'대칭(에르미트) 기계의 고유벡터는 서로 직각입니다. 1강의 동쪽·북쪽 축처럼 서로 영향을 주지 않는 기준축이 됩니다.'}
+];
+let quiz=null;
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+function newQuiz(){quiz={items:shuffle(BANK.slice()).slice(0,5),i:0,score:0,ans:false};showQ();}
+function showQ(){const c=$('#qCard');
+  if(quiz.i>=5){if(!best.quiz||quiz.score>best.quiz){best.quiz=quiz.score;save();}
+    const msg=quiz.score===5?'완벽합니다! 고윳값 사냥 마스터 🎓':quiz.score>=3?'좋아요! 다른 탭을 한 번 더 만져 보면 만점입니다':'게임과 기타줄 탭을 체험하고 다시 도전해 보세요';
+    c.innerHTML=`<div class="big">${quiz.score} / 5</div><p style="text-align:center">${msg}</p><p class="prog" style="text-align:center">최고 기록 ${best.quiz} / 5</p><div class="row"><button class="btn" id="qA">새 문제로 다시</button></div>`;$('#qA').onclick=newQuiz;return;}
+  const it=quiz.items[quiz.i];quiz.ans=false;const order=shuffle(it.o.map((t,k)=>k));
+  c.innerHTML=`<div class="prog">문제 ${quiz.i+1} / 5 · 점수 ${quiz.score}</div><div class="quiz-q">${it.q}</div><div class="opts">${order.map(k=>`<button data-k="${k}">${it.o[k]}</button>`).join('')}</div><div id="qE"></div>`;
+  $$('#qCard .opts button').forEach(b=>b.onclick=()=>{if(quiz.ans)return;quiz.ans=true;const ok=+b.dataset.k===it.a;if(ok)quiz.score++;
+    $$('#qCard .opts button').forEach(x=>{if(+x.dataset.k===it.a)x.classList.add('ok');});if(!ok)b.classList.add('no');
+    $('#qE').innerHTML=`<div class="exp"><b>${ok?'정답입니다!':'아쉬워요.'}</b> ${it.e}</div><div class="row" style="margin-top:10px"><button class="btn" id="qN">${quiz.i<4?'다음 문제':'결과 보기'}</button></div>`;
+    $('#qN').onclick=()=>{quiz.i++;showQ();};});}
+
+/* ================= 탭 ================= */
+function show(tab){$$('.tabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab===tab));
+  ['hunt','string','comp','quiz'].forEach(t=>$('#tab-'+t).hidden=t!==tab);
+  if(tab==='hunt')drawH();if(tab==='comp')drawC();if(tab==='quiz'&&!quiz)newQuiz();if(tab==='string')eTable();}
+$$('.tabs button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
+window.addEventListener('resize',()=>{if(!$('#tab-hunt').hidden)drawH();if(!$('#tab-comp').hidden)drawC();});
+startLevel(0);eTable();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
